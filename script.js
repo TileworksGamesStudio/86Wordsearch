@@ -7,7 +7,7 @@
   'use strict';
 
   // Config & Permanent Identity
-  const STORAGE_KEY = 'wordsearch_save_v1';
+  const STORAGE_KEY = 'COCKTAIL_wordsearch_save_v1';
   const CSV_FILE = 'puzzles.csv';
   const HOME_URL = 'https://tileworksgamesstudio.github.io/86/'; // Destination placeholder configured by project owner
 
