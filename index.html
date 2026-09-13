@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Word Search — The Cocktail Lounge</title>
+
+  <!-- Google Fonts: Luxury Cocktail Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Atmospheric Background & Environmental Lighting Layers -->
+  <div class="lounge-backdrop" aria-hidden="true">
+    <div class="caustic-light caustic-1"></div>
+    <div class="caustic-light caustic-2"></div>
+    <div class="caustic-light caustic-3"></div>
+    <div id="garnishStage" class="garnish-stage"></div>
+    <div class="lounge-vignette"></div>
+    <div class="lounge-grain"></div>
+  </div>
+
+  <div class="app-container">
+
+    <!-- Error View -->
+    <div id="viewError" class="view hidden" role="alert">
+      <div class="card text-center glass-panel">
+        <div class="menu-divider" aria-hidden="true"><span class="ornament">♦</span></div>
+        <h2>Unavailable</h2>
+        <p id="errorMsg" class="subtitle">Unable to load puzzle data.</p>
+        <div class="menu-divider" aria-hidden="true"><span class="ornament">♦</span></div>
+        <button type="button" id="btnRetry" class="btn">Try Again</button>
+      </div>
+    </div>
+
+    <!-- Main Menu View -->
+    <main id="viewMenu" class="view">
+      <header class="app-header">
+        <div class="header-pretitle" aria-hidden="true">The Reserve Collection</div>
+        <h1 class="app-title">Word Search</h1>
+        <div class="title-rule" aria-hidden="true">
+          <span class="rule-line"></span>
+          <span class="rule-gem">♦</span>
+          <span class="rule-line"></span>
+        </div>
+        <p id="menuDate" class="subtitle"></p>
+      </header>
+
+      <!-- Primary Navigation Destinations (Daily Puzzle -> Vault -> Home) -->
+      <nav class="main-nav" aria-label="Main Navigation">
+        
+        <!-- 1. Daily Puzzle Destination -->
+        <section class="card nav-card daily-card glass-panel" aria-labelledby="dailyHeading">
+          <div class="card-header">
+            <div>
+              <span class="eyebrow">Today's Edition</span>
+              <h2 id="dailyHeading" class="card-title">Daily Puzzle</h2>
+            </div>
+            <span id="dailyPuzzleTheme" class="theme-pill"></span>
+          </div>
+
+          <div class="tier-picker">
+            <button type="button" class="tier-btn" id="btnPlayMini">
+              <span class="tier-name">Mini</span>
+              <span class="tier-dim">8 × 8</span>
+              <span id="statusMini" class="status-indicator">Unsolved</span>
+            </button>
+            <button type="button" class="tier-btn" id="btnPlayMidi">
+              <span class="tier-name">Midi</span>
+              <span class="tier-dim">10 × 10</span>
+              <span id="statusMidi" class="status-indicator">Unsolved</span>
+            </button>
+            <button type="button" class="tier-btn" id="btnPlayMain">
+              <span class="tier-name">Main</span>
+              <span class="tier-dim">12 × 12</span>
+              <span id="statusMain" class="status-indicator">Unsolved</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- 2. Vault Destination -->
+        <button type="button" id="btnOpenVault" class="nav-btn glass-panel">
+          <div class="nav-btn-content">
+            <strong>Vault</strong>
+            <span class="nav-sub">Past Puzzles Archive</span>
+          </div>
+          <span class="nav-arrow" aria-hidden="true">→</span>
+        </button>
+
+        <!-- 3. Home Destination -->
+        <a href="#" id="linkHome" class="nav-btn nav-btn-home glass-panel" aria-label="Return to Home">
+          <div class="nav-btn-content">
+            <strong>Home</strong>
+            <span class="nav-sub">Return to Main Portal</span>
+          </div>
+          <span class="nav-arrow" aria-hidden="true">↗</span>
+        </a>
+      </nav>
+
+      <!-- Utility Links -->
+      <footer class="menu-footer">
+        <button type="button" id="btnOpenRules" class="btn-text">How to Play</button>
+        <span class="bullet" aria-hidden="true">◆</span>
+        <button type="button" id="btnOpenStats" class="btn-text">Statistics</button>
+      </footer>
+    </main>
+
+    <!-- Gameplay View -->
+    <main id="viewGame" class="view hidden">
+      <!-- Dedicated Gameplay Header -->
+      <header class="game-header">
+        <button type="button" id="btnGameBack" class="btn-secondary btn-icon-back" aria-label="Back to Game Menu">
+          <span aria-hidden="true">←</span> Back
+        </button>
+        <h2 id="gameTitle" class="game-title">Puzzle</h2>
+        <div id="gameTimer" class="game-timer" aria-label="Timer">00:00</div>
+      </header>
+
+      <!-- Spatial Hierarchy: Controls & Icons ABOVE the board -->
+      <section class="game-controls-top">
+        <nav class="tier-switch" role="tablist" aria-label="Puzzle Tiers">
+          <button type="button" class="tier-tab" data-tier="mini" role="tab" aria-selected="false">Mini (8×8)</button>
+          <button type="button" class="tier-tab" data-tier="midi" role="tab" aria-selected="false">Midi (10×10)</button>
+          <button type="button" class="tier-tab" data-tier="main" role="tab" aria-selected="false">Main (12×12)</button>
+        </nav>
+
+        <div class="status-panel glass-panel">
+          <span id="wordCounter" class="word-counter" aria-live="polite">0 / 0</span>
+          <span id="currentSelection" class="selection-preview" aria-live="polite">Drag across letters to select</span>
+        </div>
+      </section>
+
+      <!-- Spatial Hierarchy: Game Board in the CENTER -->
+      <section class="board-area" aria-label="Letter Grid">
+        <div class="grid-frame glass-panel">
+          <div id="grid" class="word-grid" role="grid"></div>
+        </div>
+      </section>
+
+      <!-- Spatial Hierarchy: Supporting Text / Words BELOW the board -->
+      <section class="words-area" aria-label="Word list">
+        <header class="words-header">
+          <h3 class="words-title">Words to Discover</h3>
+          <span class="words-gold-rule" aria-hidden="true"></span>
+        </header>
+        <ul id="wordList" class="word-list"></ul>
+      </section>
+    </main>
+
+    <!-- Vault View -->
+    <main id="viewVault" class="view hidden">
+      <header class="game-header">
+        <button type="button" id="btnVaultBack" class="btn-secondary btn-icon-back" aria-label="Back to Game Menu">
+          <span aria-hidden="true">←</span> Back
+        </button>
+        <h2 class="game-title">Vault</h2>
+        <div class="header-spacer" aria-hidden="true"></div>
+      </header>
+      <div id="vaultList" class="vault-list" role="list"></div>
+    </main>
+
+  </div>
+
+  <!-- Rules Dialog -->
+  <dialog id="modalRules" class="modal">
+    <div class="modal-box glass-panel">
+      <div class="modal-header">
+        <h3>How to Play</h3>
+        <button type="button" class="btn-close" data-close="modalRules" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Find all listed words hidden within the vintage crystal grid:</p>
+        <ul class="rule-list">
+          <li>Touch or drag smoothly from the first letter to the final letter of a word.</li>
+          <li>Words run in continuous straight lines: horizontally, vertically, or diagonally in either direction.</li>
+          <li>Each daily release provides three sizes: <strong>Mini (8×8)</strong>, <strong>Midi (10×10)</strong>, and <strong>Main (12×12)</strong>.</li>
+        </ul>
+      </div>
+      <button type="button" class="btn btn-block" data-close="modalRules">Got It</button>
+    </div>
+  </dialog>
+
+  <!-- Statistics Dialog -->
+  <dialog id="modalStats" class="modal">
+    <div class="modal-box glass-panel">
+      <div class="modal-header">
+        <h3>Your Statistics</h3>
+        <button type="button" class="btn-close" data-close="modalStats" aria-label="Close">✕</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span id="statPlayed" class="stat-num">0</span>
+          <span class="stat-label">Played</span>
+        </div>
+        <div class="stat-item">
+          <span id="statSolved" class="stat-num">0</span>
+          <span class="stat-label">Solved</span>
+        </div>
+        <div class="stat-item">
+          <span id="statStreak" class="stat-num">0</span>
+          <span class="stat-label">Streak</span>
+        </div>
+        <div class="stat-item">
+          <span id="statBestStreak" class="stat-num">0</span>
+          <span class="stat-label">Best</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn-secondary btn-block" data-close="modalStats">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Victory Dialog -->
+  <dialog id="modalVictory" class="modal">
+    <div class="modal-box text-center glass-panel victory-box">
+      <div class="victory-ornament" aria-hidden="true">✦ ✧ ✦</div>
+      <h3 class="victory-heading">Puzzle Complete</h3>
+      <p id="victoryText" class="subtitle">All words discovered.</p>
+      <div class="modal-actions">
+        <button type="button" id="btnVictoryNext" class="btn btn-block">Next Tier</button>
+        <button type="button" class="btn btn-secondary btn-block" data-close="modalVictory">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>

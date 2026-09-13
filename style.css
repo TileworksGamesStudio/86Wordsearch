@@ -1,0 +1,1093 @@
+/* ==========================================================================
+   MASTER VISUAL SYSTEM: LUXURY DARK BURNT-ORANGE COCKTAIL LOUNGE
+   ========================================================================== */
+
+:root {
+  /* Core Lounge Dark Palette */
+  --bg-deep-void:       #0F0704;
+  --bg-dark-espresso:   #150905;
+  --bg-burnt-charcoal:  #1C0D07;
+  --bg-smoked-surface:  rgba(28, 14, 8, 0.72);
+  --bg-smoked-elevated: rgba(38, 18, 10, 0.85);
+  --bg-cell-base:       rgba(23, 11, 7, 0.92);
+
+  /* Burnt-Orange Atmosphere Tones */
+  --orange-ember-dim:   #4A1D0B;
+  --orange-ember-core:  #7C2C0E;
+  --orange-rich-accent: #A84218;
+  --orange-vibrant:     #D55E24;
+  --orange-glow:        #F27A38;
+  --orange-ambient:     rgba(168, 66, 24, 0.18);
+
+  /* Polished Metallic Gold & Brass Gradient Tokens */
+  --gold-dark-shadow:   #593F16;
+  --gold-antique:       #8A6626;
+  --gold-warm-brass:    #BD8F3A;
+  --gold-luminous:      #DFB95F;
+  --gold-pale-light:    #F7E5A0;
+  --gold-highlight:     #FFF5D1;
+
+  /* Metallic Surface Gradients */
+  --grad-brass-rim: linear-gradient(135deg, var(--gold-antique) 0%, var(--gold-luminous) 30%, var(--gold-pale-light) 45%, var(--gold-warm-brass) 70%, var(--gold-dark-shadow) 100%);
+  --grad-gold-text: linear-gradient(180deg, #FFF6DA 0%, #E8C36D 50%, #B3862C 100%);
+  --grad-gold-soft: linear-gradient(180deg, #F3DE9C 0%, #C99C44 100%);
+  --grad-glass-card: linear-gradient(150deg, rgba(46, 22, 12, 0.78) 0%, rgba(20, 9, 5, 0.85) 100%);
+  --grad-active-glass: linear-gradient(135deg, rgba(168, 66, 24, 0.28) 0%, rgba(45, 18, 9, 0.6) 100%);
+
+  /* Functional Accents */
+  --c-success-gold:     #DFB95F;
+  --c-success-glow:     rgba(223, 185, 95, 0.35);
+  --c-success-bg:       rgba(124, 44, 14, 0.45);
+  --c-selection-glow:   rgba(213, 94, 36, 0.35);
+  --c-selection-bg:     rgba(168, 66, 24, 0.4);
+
+  /* Typography & Semantics */
+  --text-ivory-light:   #FDF9F2;
+  --text-champagne:     #E9DEC9;
+  --text-caramel-muted: #B39B88;
+  --text-dark-amber:    #7E6252;
+
+  /* Fonts */
+  --font-display: 'Playfair Display', Didot, 'Bodoni MT', Georgia, serif;
+  --font-serif-caps: 'Cinzel', 'Playfair Display', serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Physics & Radii */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Velvet Depth Shadows */
+  --shadow-velvet-sm: 0 4px 14px rgba(6, 2, 1, 0.55), 0 1px 2px rgba(0, 0, 0, 0.8);
+  --shadow-velvet-md: 0 10px 30px rgba(4, 1, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(247, 229, 160, 0.12);
+  --shadow-velvet-lg: 0 20px 48px rgba(3, 1, 0, 0.85), 0 4px 12px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(247, 229, 160, 0.18);
+  --shadow-gold-halo: 0 0 18px rgba(223, 185, 95, 0.22), 0 0 40px rgba(168, 66, 24, 0.15);
+}
+
+/* ==========================================================================
+   CSS Reset & Lounge Foundation
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100%;
+  background-color: var(--bg-deep-void);
+  color: var(--text-champagne);
+  font-family: var(--font-sans);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.hidden { display: none !important; }
+.text-center { text-align: center; }
+
+/* ==========================================================================
+   Atmospheric Lighting, Caustics & Garnish Background
+   ========================================================================== */
+
+.lounge-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 20%, #2B1107 0%, #150905 50%, #0D0503 100%);
+}
+
+/* Ambient Moving Caustics */
+.caustic-light {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.42;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.caustic-1 {
+  width: 480px;
+  height: 480px;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(213, 94, 36, 0.4) 0%, rgba(124, 44, 14, 0.12) 65%, transparent 100%);
+  animation: causticDrift 22s ease-in-out infinite alternate;
+}
+
+.caustic-2 {
+  width: 380px;
+  height: 380px;
+  bottom: 5%;
+  right: -60px;
+  background: radial-gradient(circle, rgba(168, 66, 24, 0.35) 0%, rgba(89, 63, 22, 0.1) 70%, transparent 100%);
+  animation: causticDrift 18s ease-in-out infinite alternate-reverse;
+}
+
+.caustic-3 {
+  width: 340px;
+  height: 340px;
+  top: 45%;
+  left: -90px;
+  background: radial-gradient(circle, rgba(223, 185, 95, 0.22) 0%, rgba(124, 44, 14, 0.08) 60%, transparent 100%);
+  animation: causticDrift 26s ease-in-out infinite alternate;
+}
+
+@keyframes causticDrift {
+  0% { transform: translate(-30px, -20px) scale(0.95); }
+  50% { transform: translate(25px, 20px) scale(1.08); }
+  100% { transform: translate(-10px, 35px) scale(1); }
+}
+
+/* Vignette Layer */
+.lounge-vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 120px rgba(8, 3, 2, 0.88), inset 0 0 240px rgba(3, 1, 0, 0.95);
+}
+
+/* Subtle Material Grain Layer */
+.lounge-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.038;
+  background-image: radial-gradient(#FFF 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* Garnish Stage (12 Distinct Cocktail Garnishes Floating Upward) */
+.garnish-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.garnish-item {
+  position: absolute;
+  bottom: -90px;
+  will-change: transform, opacity;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.garnish-item svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Depth Layers for Floating Garnishes */
+.garnish-item.depth-distant {
+  filter: blur(1.5px) drop-shadow(0 0 8px rgba(168, 66, 24, 0.25));
+  opacity: 0.16;
+}
+
+.garnish-item.depth-middle {
+  filter: drop-shadow(0 0 10px rgba(213, 94, 36, 0.35));
+  opacity: 0.28;
+}
+
+.garnish-item.depth-near {
+  filter: drop-shadow(0 0 14px rgba(242, 122, 56, 0.5));
+  opacity: 0.42;
+}
+
+/* ==========================================================================
+   Application Shell & Smoked Glass Panels
+   ========================================================================== */
+
+.app-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 530px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px 24px;
+  background: linear-gradient(180deg, rgba(18, 8, 4, 0.88) 0%, rgba(13, 5, 3, 0.95) 100%);
+  border-left: 1px solid rgba(189, 143, 58, 0.22);
+  border-right: 1px solid rgba(189, 143, 58, 0.22);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.8), 0 0 25px rgba(124, 44, 14, 0.12);
+}
+
+@media (max-width: 560px) {
+  .app-container {
+    border-left: none;
+    border-right: none;
+    padding: 14px 12px 18px;
+  }
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+}
+
+/* Smoked Cocktail Glass Refraction (Glassmorphism + Metallic Brass Edge) */
+.glass-panel {
+  position: relative;
+  background: var(--grad-glass-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(223, 185, 95, 0.32);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-velvet-md);
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Polished Brass Light Sweep (Signature UI Effect #1) */
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -80%;
+  width: 40%;
+  height: 220%;
+  background: linear-gradient(75deg, transparent 0%, rgba(255, 245, 209, 0.04) 40%, rgba(255, 245, 209, 0.22) 50%, rgba(255, 245, 209, 0.04) 60%, transparent 100%);
+  transform: rotate(25deg);
+  pointer-events: none;
+  animation: brassSweep 14s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes brassSweep {
+  0%, 75% { transform: translateX(-180%) rotate(25deg); }
+  85%, 100% { transform: translateX(520%) rotate(25deg); }
+}
+
+/* ==========================================================================
+   Typography & Menu Branding
+   ========================================================================== */
+
+.app-header {
+  text-align: center;
+  padding: 16px 0 24px;
+}
+
+.header-pretitle {
+  font-family: var(--font-serif-caps);
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold-warm-brass);
+  margin-bottom: 6px;
+  text-shadow: 0 0 10px rgba(189, 143, 58, 0.3);
+}
+
+.app-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6.5vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  background: var(--grad-gold-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 14px rgba(168, 66, 24, 0.4);
+  line-height: 1.15;
+}
+
+.title-rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px auto 6px;
+  max-width: 220px;
+}
+
+.title-rule .rule-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(223, 185, 95, 0.5), transparent);
+}
+
+.title-rule .rule-gem {
+  font-size: 0.6rem;
+  color: var(--gold-luminous);
+  text-shadow: 0 0 8px rgba(223, 185, 95, 0.8);
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-ivory-light);
+  letter-spacing: 0.01em;
+}
+
+.subtitle {
+  font-size: 0.84rem;
+  color: var(--text-caramel-muted);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--font-serif-caps);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--gold-warm-brass);
+  margin-bottom: 2px;
+}
+
+.menu-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0;
+  color: var(--gold-antique);
+}
+
+.menu-divider .ornament {
+  font-size: 0.75rem;
+}
+
+/* ==========================================================================
+   Tactile Luxury Controls & Polished Brass Surfaces
+   ========================================================================== */
+
+.btn, .tier-btn, .nav-btn, .btn-secondary, .tier-tab {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  position: relative;
+  outline: none;
+  border: 1px solid rgba(223, 185, 95, 0.35);
+  box-shadow: var(--shadow-velvet-sm);
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0.1, 1),
+              box-shadow 0.15s ease,
+              border-color 0.2s ease,
+              background 0.2s ease,
+              color 0.2s ease;
+}
+
+/* Crystal Interaction Glow (Signature UI Effect #5) */
+.btn:hover, .tier-btn:hover, .nav-btn:hover, .btn-secondary:hover, .tier-tab:hover {
+  border-color: var(--gold-luminous);
+  box-shadow: 0 0 16px rgba(223, 185, 95, 0.24), 0 6px 18px rgba(0, 0, 0, 0.65);
+}
+
+.btn:active, .tier-btn:active, .nav-btn:active, .btn-secondary:active, .tier-tab:active {
+  transform: translateY(1.5px) scale(0.99);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), inset 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.btn:focus-visible, .tier-btn:focus-visible, .nav-btn:focus-visible, .btn-secondary:focus-visible, .tier-tab:focus-visible {
+  outline: 2px solid var(--gold-pale-light);
+  outline-offset: 3px;
+}
+
+/* Primary Button (Burnished Brass / Dark Ember Bar Control) */
+.btn {
+  padding: 10px 22px;
+  background: linear-gradient(180deg, #9C3912 0%, #682309 100%);
+  color: var(--text-ivory-light);
+  border: 1px solid rgba(247, 229, 160, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 14px rgba(104, 35, 9, 0.4), inset 0 1px 0 rgba(255, 245, 209, 0.25);
+}
+
+.btn:hover {
+  background: linear-gradient(180deg, #BA4616 0%, #7E2B0C 100%);
+  border-color: var(--gold-pale-light);
+  color: #FFF;
+}
+
+/* Secondary Button (Smoked Glass Surface) */
+.btn-secondary {
+  background: rgba(36, 17, 10, 0.75);
+  color: var(--text-champagne);
+  border: 1px solid rgba(189, 143, 58, 0.35);
+  padding: 8px 16px;
+}
+
+.btn-secondary:hover {
+  background: rgba(56, 26, 15, 0.85);
+  color: var(--text-ivory-light);
+  border-color: var(--gold-luminous);
+}
+
+.btn-block { width: 100%; }
+
+.btn-text {
+  background: none;
+  border: none;
+  font-family: var(--font-serif-caps);
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-warm-brass);
+  cursor: pointer;
+  padding: 6px 8px;
+  transition: color 0.18s ease, text-shadow 0.18s ease;
+}
+
+.btn-text:hover {
+  color: var(--gold-pale-light);
+  text-shadow: 0 0 10px rgba(223, 185, 95, 0.6);
+}
+
+/* ==========================================================================
+   Main Menu Destinations (Daily Puzzle -> Vault -> Home)
+   ========================================================================== */
+
+.main-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  padding: 18px;
+}
+
+.daily-card {
+  padding: 20px 18px;
+  background: var(--grad-glass-card);
+  border: 1px solid rgba(223, 185, 95, 0.45);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.theme-pill {
+  font-family: var(--font-serif-caps);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, rgba(89, 63, 22, 0.5) 0%, rgba(45, 22, 10, 0.7) 100%);
+  color: var(--gold-pale-light);
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(223, 185, 95, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 245, 209, 0.15);
+}
+
+/* Tier Picker */
+.tier-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tier-btn {
+  flex-direction: column;
+  padding: 12px 6px;
+  background: rgba(26, 12, 7, 0.85);
+  border: 1px solid rgba(189, 143, 58, 0.28);
+  gap: 3px;
+  min-height: 80px;
+}
+
+.tier-btn:hover {
+  background: rgba(45, 20, 11, 0.92);
+}
+
+.tier-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-ivory-light);
+}
+
+.tier-dim {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--gold-antique);
+}
+
+.status-indicator {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+  color: var(--text-dark-amber);
+}
+
+.status-indicator.solved {
+  color: var(--gold-luminous);
+  text-shadow: 0 0 8px rgba(223, 185, 95, 0.4);
+}
+
+.status-indicator.solved::before {
+  content: '♦ ';
+  font-size: 0.65rem;
+}
+
+/* Navigation Buttons: Vault & Home */
+.nav-btn {
+  justify-content: space-between;
+  padding: 15px 20px;
+  text-align: left;
+  background: var(--grad-glass-card);
+}
+
+.nav-btn-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-btn-content strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-ivory-light);
+}
+
+.nav-sub {
+  font-size: 0.78rem;
+  color: var(--text-caramel-muted);
+}
+
+.nav-arrow {
+  font-family: var(--font-serif-caps);
+  font-size: 1.25rem;
+  color: var(--gold-warm-brass);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.nav-btn:hover .nav-arrow {
+  transform: translateX(4px);
+  color: var(--gold-pale-light);
+}
+
+.nav-btn-home:hover .nav-arrow {
+  transform: translate(3px, -3px);
+}
+
+.menu-footer {
+  margin-top: auto;
+  padding: 28px 0 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.bullet {
+  color: var(--gold-dark-shadow);
+  font-size: 0.6rem;
+}
+
+/* ==========================================================================
+   Gameplay Screen & Header
+   ========================================================================== */
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(189, 143, 58, 0.3);
+  margin-bottom: 14px;
+}
+
+.btn-icon-back {
+  padding: 6px 14px;
+  font-size: 0.84rem;
+  min-height: 38px;
+  gap: 6px;
+}
+
+.game-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-ivory-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.game-timer {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: rgba(20, 8, 4, 0.85);
+  border: 1px solid rgba(189, 143, 58, 0.4);
+  color: var(--gold-pale-light);
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  min-width: 68px;
+  text-align: center;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.header-spacer { width: 68px; }
+
+/* Gameplay Spatial Rules: Controls Above Board */
+.game-controls-top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tier-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.tier-tab {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  padding: 8px 4px;
+  min-height: 38px;
+  background: rgba(26, 12, 7, 0.8);
+  border: 1px solid rgba(189, 143, 58, 0.28);
+  color: var(--text-caramel-muted);
+}
+
+.tier-tab.active {
+  background: linear-gradient(180deg, #872E0A 0%, #541905 100%);
+  color: var(--text-ivory-light);
+  border-color: var(--gold-luminous);
+  box-shadow: 0 0 12px rgba(189, 143, 58, 0.3), inset 0 1px 0 rgba(255, 245, 209, 0.25);
+}
+
+.status-panel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  border: 1px solid rgba(189, 143, 58, 0.25);
+  font-size: 0.84rem;
+}
+
+.word-counter {
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--gold-pale-light);
+  letter-spacing: 0.05em;
+}
+
+.selection-preview {
+  color: var(--text-champagne);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Gameplay Spatial Rules: Game Board in the CENTER (Cut Crystal Glass) */
+.board-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.grid-frame {
+  padding: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(223, 185, 95, 0.45);
+  box-shadow: var(--shadow-velvet-lg), var(--shadow-gold-halo);
+  background: linear-gradient(135deg, rgba(34, 15, 8, 0.9) 0%, rgba(17, 7, 3, 0.95) 100%);
+}
+
+.word-grid {
+  display: grid;
+  width: min(86vw, 48vh, 430px);
+  aspect-ratio: 1 / 1;
+  background-color: rgba(54, 25, 13, 0.65);
+  gap: 2.5px;
+  border-radius: var(--radius-sm);
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.grid-8  { grid-template-columns: repeat(8, 1fr);  grid-template-rows: repeat(8, 1fr); }
+.grid-10 { grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); }
+.grid-12 { grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(12, 1fr); }
+
+/* Crystal Grid Cell */
+.grid-cell {
+  background: var(--bg-cell-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: clamp(0.95rem, 3.8vw, 1.35rem);
+  color: var(--text-champagne);
+  cursor: pointer;
+  border-radius: 2px;
+  border: 1px solid rgba(138, 102, 38, 0.15);
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+}
+
+.grid-cell:hover {
+  background: rgba(56, 25, 14, 0.9);
+  color: var(--gold-pale-light);
+}
+
+/* Active Drag Selection */
+.grid-cell.selecting {
+  background: var(--c-selection-bg);
+  color: #FFF;
+  border-color: var(--orange-vibrant);
+  box-shadow: inset 0 0 10px rgba(242, 122, 56, 0.6), 0 0 8px rgba(242, 122, 56, 0.4);
+}
+
+/* Discovered Word (Rich Gold Liqueur Tone) */
+.grid-cell.found {
+  background: linear-gradient(135deg, rgba(168, 66, 24, 0.7) 0%, rgba(95, 48, 14, 0.8) 100%);
+  color: var(--gold-highlight);
+  border-color: rgba(223, 185, 95, 0.7);
+  box-shadow: inset 0 0 8px rgba(223, 185, 95, 0.35);
+  text-shadow: 0 0 6px rgba(247, 229, 160, 0.6);
+}
+
+/* Gameplay Spatial Rules: Supporting Words BELOW the board */
+.words-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(189, 143, 58, 0.3);
+  padding-top: 12px;
+}
+
+.words-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.words-title {
+  font-family: var(--font-serif-caps);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gold-warm-brass);
+}
+
+.words-gold-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(189, 143, 58, 0.4), transparent);
+  margin-left: 12px;
+}
+
+.word-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  list-style: none;
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Custom Scrollbar */
+.word-list::-webkit-scrollbar, .vault-list::-webkit-scrollbar {
+  width: 4px;
+}
+.word-list::-webkit-scrollbar-thumb, .vault-list::-webkit-scrollbar-thumb {
+  background: var(--gold-antique);
+  border-radius: 4px;
+}
+
+.word-chip {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  border: 1px solid rgba(189, 143, 58, 0.3);
+  border-radius: var(--radius-xs);
+  background: rgba(28, 13, 7, 0.8);
+  color: var(--text-champagne);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+.word-chip.found {
+  text-decoration: line-through;
+  text-decoration-color: var(--gold-warm-brass);
+  text-decoration-thickness: 1.5px;
+  background: rgba(20, 9, 5, 0.65);
+  color: var(--text-dark-amber);
+  border-color: rgba(138, 102, 38, 0.2);
+  box-shadow: none;
+}
+
+.word-chip.found::after {
+  content: ' ♦';
+  font-size: 0.68rem;
+  color: var(--gold-warm-brass);
+}
+
+/* ==========================================================================
+   Vault View (Archive of Past Puzzles)
+   ========================================================================== */
+
+.vault-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  overflow-y: auto;
+  max-height: calc(100vh - 160px);
+}
+
+.vault-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--grad-glass-card);
+  border: 1px solid rgba(189, 143, 58, 0.3);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-velvet-sm);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vault-item:hover {
+  border-color: var(--gold-luminous);
+  box-shadow: var(--shadow-gold-halo);
+  transform: translateY(-1px);
+}
+
+.vault-item:active {
+  transform: translateY(1px);
+}
+
+.vault-meta strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-ivory-light);
+}
+
+.vault-badges {
+  display: flex;
+  gap: 5px;
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(189, 143, 58, 0.25);
+  background: rgba(22, 10, 5, 0.8);
+  color: var(--text-caramel-muted);
+}
+
+.badge.done {
+  background: linear-gradient(135deg, rgba(168, 66, 24, 0.4) 0%, rgba(95, 48, 14, 0.6) 100%);
+  border-color: var(--gold-luminous);
+  color: var(--gold-pale-light);
+  box-shadow: 0 0 8px rgba(223, 185, 95, 0.25);
+}
+
+/* ==========================================================================
+   Modals & Dialogs
+   ========================================================================== */
+
+.modal {
+  margin: auto;
+  border: none;
+  background: transparent;
+  padding: 16px;
+  max-width: 420px;
+  width: 90vw;
+}
+
+.modal::backdrop {
+  background: rgba(8, 3, 2, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-box {
+  padding: 24px 22px;
+  border: 1px solid rgba(223, 185, 95, 0.5);
+  box-shadow: var(--shadow-velvet-lg), 0 0 30px rgba(168, 66, 24, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(189, 143, 58, 0.25);
+  padding-bottom: 10px;
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-ivory-light);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--gold-warm-brass);
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.btn-close:hover {
+  color: var(--gold-pale-light);
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  font-size: 0.9rem;
+  color: var(--text-champagne);
+  margin-bottom: 20px;
+  line-height: 1.55;
+}
+
+.rule-list {
+  padding-left: 20px;
+  margin-top: 12px;
+}
+
+.rule-list li {
+  margin-bottom: 8px;
+}
+
+.rule-list strong {
+  color: var(--gold-pale-light);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  text-align: center;
+  margin: 20px 0 24px;
+}
+
+.stat-item {
+  background: rgba(22, 9, 5, 0.85);
+  border: 1px solid rgba(189, 143, 58, 0.3);
+  border-radius: var(--radius-xs);
+  padding: 10px 4px;
+}
+
+.stat-num {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--gold-pale-light);
+  text-shadow: 0 0 10px rgba(223, 185, 95, 0.3);
+}
+
+.stat-label {
+  font-family: var(--font-serif-caps);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold-antique);
+}
+
+/* Victory Modal Specifics */
+.victory-ornament {
+  font-size: 0.9rem;
+  color: var(--gold-luminous);
+  letter-spacing: 0.4em;
+  margin-bottom: 6px;
+  text-shadow: 0 0 12px rgba(223, 185, 95, 0.7);
+}
+
+.victory-heading {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  background: var(--grad-gold-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ==========================================================================
+   Reduced Motion Support
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .garnish-stage {
+    display: none !important;
+  }
+  .caustic-light {
+    animation: none !important;
+  }
+  .glass-panel::after {
+    display: none !important;
+  }
+}
