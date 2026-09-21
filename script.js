@@ -1,22 +1,23 @@
 /**
- * Word Search — The Cocktail Lounge Edition
- * Handcrafted Visual, Ambient & Audio System
+ * Word Search
+ * Full Game Architecture compliant with Cocktail Lounge Universal Design System
  */
 
 (() => {
   'use strict';
 
-  // Config & Permanent Identity
-  const STORAGE_KEY = 'COCKTAIL_wordsearch_save_v1';
+  // --- Constants & Config ---
+  const STORAGE_KEY = 'cocktail_wordsearch_state_v2';
   const CSV_FILE = 'puzzles.csv';
-  const HOME_URL = 'https://tileworksgamesstudio.github.io/86/'; // Destination placeholder configured by project owner
+  const HOME_PORTAL_URL = 'https://tileworksgamesstudio.github.io/86/';
+  const FUTURE_EXT_URL = '#';
 
   // Application State
   const STATE = {
     puzzles: [],
     todayPuzzle: null,
     activePuzzle: null,
-    activeTier: 'mini', // 'mini' | 'midi' | 'main'
+    activeTier: 'mini',
     gridSize: 8,
     gridData: null,
     placedWords: [],
@@ -28,13 +29,17 @@
     timerSeconds: 0,
     timerInterval: null,
     isSolved: false,
+    serverDate: null,
+    settings: {
+      bgAnimation: true
+    },
     userData: {
       stats: { played: 0, solved: 0, streak: 0, bestStreak: 0 },
-      history: {} // [puzzleDate_tier]: { time: number, solved: boolean }
+      history: {}
     }
   };
 
-  // DOM Elements
+  // DOM Elements Cache
   const DOM = {
     viewError: document.getElementById('viewError'),
     errorMsg: document.getElementById('errorMsg'),
@@ -43,23 +48,20 @@
     viewGame: document.getElementById('viewGame'),
     viewVault: document.getElementById('viewVault'),
 
-    menuDate: document.getElementById('menuDate'),
-    dailyPuzzleTheme: document.getElementById('dailyPuzzleTheme'),
-    statusMini: document.getElementById('statusMini'),
-    statusMidi: document.getElementById('statusMidi'),
-    statusMain: document.getElementById('statusMain'),
-    btnPlayMini: document.getElementById('btnPlayMini'),
-    btnPlayMidi: document.getElementById('btnPlayMidi'),
-    btnPlayMain: document.getElementById('btnPlayMain'),
-
-    btnOpenVault: document.getElementById('btnOpenVault'),
     linkHome: document.getElementById('linkHome'),
+    lblPlayAction: document.getElementById('lblPlayAction'),
+    lblPlayTheme: document.getElementById('lblPlayTheme'),
+    btnPlayGame: document.getElementById('btnPlayGame'),
+    btnOpenVault: document.getElementById('btnOpenVault'),
+    btnOpenSettings: document.getElementById('btnOpenSettings'),
     btnOpenRules: document.getElementById('btnOpenRules'),
+
     btnOpenStats: document.getElementById('btnOpenStats'),
+    btnShareGame: document.getElementById('btnShareGame'),
+    btnUtilityPlus: document.getElementById('btnUtilityPlus'),
 
     btnGameBack: document.getElementById('btnGameBack'),
     btnVaultBack: document.getElementById('btnVaultBack'),
-
     gameTitle: document.getElementById('gameTitle'),
     gameTimer: document.getElementById('gameTimer'),
     tierTabs: document.querySelectorAll('.tier-tab'),
@@ -69,245 +71,29 @@
     wordList: document.getElementById('wordList'),
     vaultList: document.getElementById('vaultList'),
 
-    modalStats: document.getElementById('modalStats'),
-    modalRules: document.getElementById('modalRules'),
-    modalVictory: document.getElementById('modalVictory'),
-    victoryText: document.getElementById('victoryText'),
-    btnVictoryNext: document.getElementById('btnVictoryNext'),
+    panelHowToPlay: document.getElementById('panelHowToPlay'),
+    btnCloseRules: document.getElementById('btnCloseRules'),
+    btnAcknowledgeRules: document.getElementById('btnAcknowledgeRules'),
 
+    modalSettings: document.getElementById('modalSettings'),
+    btnToggleAnimation: document.getElementById('btnToggleAnimation'),
+    lblAnimationState: document.getElementById('lblAnimationState'),
+
+    modalStats: document.getElementById('modalStats'),
     statPlayed: document.getElementById('statPlayed'),
     statSolved: document.getElementById('statSolved'),
     statStreak: document.getElementById('statStreak'),
     statBestStreak: document.getElementById('statBestStreak'),
 
-    garnishStage: document.getElementById('garnishStage')
+    modalVictory: document.getElementById('modalVictory'),
+    victoryText: document.getElementById('victoryText'),
+    btnVictoryNext: document.getElementById('btnVictoryNext'),
+
+    appToast: document.getElementById('appToast'),
+    iconAtmosphere: document.getElementById('iconAtmosphere')
   };
 
-  // ==========================================================================
-  // Subtle Cocktail Lounge Audio System (Pure Web Audio Synthesizer)
-  // Fail-safe, gesture-unlocked, luxurious restraint.
-  // ==========================================================================
-  const AUDIO = (() => {
-    let ctx = null;
-    let enabled = true;
-
-    function getContext() {
-      if (!enabled) return null;
-      try {
-        if (!ctx) {
-          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-          if (AudioContextClass) ctx = new AudioContextClass();
-        }
-        if (ctx && ctx.state === 'suspended') {
-          ctx.resume().catch(() => {});
-        }
-      } catch (_) {
-        enabled = false;
-      }
-      return ctx;
-    }
-
-    function unlock() {
-      getContext();
-    }
-
-    function playTone(freq, type = 'sine', duration = 0.08, gainVal = 0.04, pitchDecay = true) {
-      try {
-        const c = getContext();
-        if (!c || c.state !== 'running') return;
-        const osc = c.createOscillator();
-        const gain = c.createGain();
-
-        osc.type = type;
-        const now = c.currentTime;
-        osc.frequency.setValueAtTime(freq, now);
-        if (pitchDecay) {
-          osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq * 0.7), now + duration);
-        }
-
-        gain.gain.setValueAtTime(gainVal, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-        osc.connect(gain);
-        gain.connect(c.destination);
-
-        osc.start(now);
-        osc.stop(now + duration);
-      } catch (_) {}
-    }
-
-    return {
-      unlock,
-      tap: () => playTone(680, 'sine', 0.04, 0.03, true),
-      cellTick: () => playTone(1200, 'triangle', 0.03, 0.015, false),
-      wordFound: () => {
-        try {
-          const c = getContext();
-          if (!c || c.state !== 'running') return;
-          const now = c.currentTime;
-          [784, 987.77, 1318.5].forEach((freq, i) => {
-            const osc = c.createOscillator();
-            const gain = c.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + i * 0.06);
-            gain.gain.setValueAtTime(0.035, now + i * 0.06);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.06 + 0.28);
-            osc.connect(gain);
-            gain.connect(c.destination);
-            osc.start(now + i * 0.06);
-            osc.stop(now + i * 0.06 + 0.28);
-          });
-        } catch (_) {}
-      },
-      victory: () => {
-        try {
-          const c = getContext();
-          if (!c || c.state !== 'running') return;
-          const now = c.currentTime;
-          const chord = [523.25, 659.25, 783.99, 1046.5];
-          chord.forEach((freq, idx) => {
-            const osc = c.createOscillator();
-            const gain = c.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-            gain.gain.setValueAtTime(0.04, now + idx * 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.8);
-            osc.connect(gain);
-            gain.connect(c.destination);
-            osc.start(now + idx * 0.08);
-            osc.stop(now + idx * 0.08 + 0.8);
-          });
-        } catch (_) {}
-      }
-    };
-  })();
-
-  // ==========================================================================
-  // EXACTLY 12 COCKTAIL GARNISH VECTOR TEMPLATES
-  // ==========================================================================
-  const GARNISH_SVGS = [
-    // 1. Orange twist
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 50 C20 40, 26 22, 40 20 C54 18, 52 38, 36 42 C20 46, 24 16, 48 12" stroke="url(#garnishGrad)"/></svg>`,
-    // 2. Lemon twist
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M46 14 C36 12, 18 20, 20 34 C22 48, 44 42, 42 26 C40 10, 16 28, 14 48" stroke="url(#garnishGrad)"/></svg>`,
-    // 3. Lime wheel
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><circle cx="32" cy="32" r="24" stroke="url(#garnishGrad)"/><circle cx="32" cy="32" r="20" stroke="url(#garnishGrad)" stroke-opacity="0.5"/><path d="M32 12 L32 52 M12 32 L52 32 M18 18 L46 46 M18 46 L46 18" stroke="url(#garnishGrad)" stroke-opacity="0.6"/></svg>`,
-    // 4. Lemon wheel
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><circle cx="32" cy="32" r="25" stroke="url(#garnishGrad)"/><circle cx="32" cy="32" r="21" stroke="url(#garnishGrad)" stroke-opacity="0.45"/><circle cx="32" cy="32" r="3" fill="url(#garnishGrad)"/><path d="M32 11 L32 29 M32 35 L32 53 M11 32 L29 32 M35 32 L53 32 M17 17 L29 29 M35 35 L47 47 M17 47 L29 35 M35 29 L47 17" stroke="url(#garnishGrad)"/></svg>`,
-    // 5. Dehydrated orange wheel
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><circle cx="32" cy="32" r="25" stroke="url(#garnishGrad)" stroke-dasharray="4 2"/><circle cx="32" cy="32" r="19" stroke="url(#garnishGrad)" stroke-opacity="0.7"/><circle cx="32" cy="32" r="5" stroke="url(#garnishGrad)"/><path d="M32 13 L32 27 M32 37 L32 51 M13 32 L27 32 M37 32 L51 32" stroke="url(#garnishGrad)"/></svg>`,
-    // 6. Dehydrated lemon wheel
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="32" cy="32" r="24" stroke="url(#garnishGrad)"/><circle cx="32" cy="32" r="18" stroke="url(#garnishGrad)" stroke-dasharray="5 3"/><path d="M32 14 V50 M14 32 H50 M19 19 L45 45 M19 45 L45 19" stroke="url(#garnishGrad)" stroke-opacity="0.5"/></svg>`,
-    // 7. Cocktail cherry
-    `<svg viewBox="0 0 64 64" fill="none"><circle cx="28" cy="40" r="15" fill="url(#garnishGrad)" opacity="0.85"/><path d="M28 25 C30 15, 38 8, 48 8" stroke="url(#garnishGrad)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
-    // 8. Maraschino cherry pair
-    `<svg viewBox="0 0 64 64" fill="none"><circle cx="22" cy="42" r="12" fill="url(#garnishGrad)" opacity="0.8"/><circle cx="42" cy="42" r="12" fill="url(#garnishGrad)" opacity="0.85"/><path d="M22 30 C24 16, 32 12, 34 8 C36 12, 40 18, 42 30" stroke="url(#garnishGrad)" stroke-width="2.2" stroke-linecap="round"/><path d="M34 8 Q39 6 44 10" stroke="url(#garnishGrad)" stroke-width="2"/></svg>`,
-    // 9. Mint sprig
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><path d="M32 52 L32 16" stroke="url(#garnishGrad)"/><path d="M32 36 C22 34 16 26 20 18 C28 16 32 26 32 36 Z" fill="url(#garnishGrad)" opacity="0.55"/><path d="M32 36 C42 34 48 26 44 18 C36 16 32 26 32 36 Z" fill="url(#garnishGrad)" opacity="0.55"/><path d="M32 20 C26 12 32 6 32 6 C32 6 38 12 32 20 Z" fill="url(#garnishGrad)" opacity="0.6"/></svg>`,
-    // 10. Rosemary sprig
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M32 56 V10" stroke="url(#garnishGrad)" stroke-width="2.2"/><path d="M32 46 L20 40 M32 42 L44 36 M32 34 L18 28 M32 30 L46 24 M32 22 L20 16 M32 18 L44 12" stroke="url(#garnishGrad)"/></svg>`,
-    // 11. Green olive
-    `<svg viewBox="0 0 64 64" fill="none"><ellipse cx="32" cy="34" rx="16" ry="20" fill="url(#garnishGrad)" opacity="0.85"/><ellipse cx="32" cy="24" rx="6" ry="4" fill="#1A0A05"/><line x1="32" y1="6" x2="32" y2="58" stroke="url(#garnishGrad)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
-    // 12. Cucumber ribbon
-    `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 48 C20 44 26 50 34 46 C42 42 46 22 36 18 C26 14 18 32 30 36 C42 40 50 30 52 14" stroke="url(#garnishGrad)" stroke-linecap="round"/><path d="M16 48 C24 44 30 50 38 46" stroke="url(#garnishGrad)" stroke-opacity="0.5"/></svg>`
-  ];
-
-  // SVG Shared Gradient Definition
-  const SVG_GRAD_DEF = `
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-      <defs>
-        <linearGradient id="garnishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#F7E5A0" />
-          <stop offset="45%" stop-color="#D55E24" />
-          <stop offset="100%" stop-color="#7C2C0E" />
-        </linearGradient>
-      </defs>
-    </svg>
-  `;
-
-  // ==========================================================================
-  // Animated Cocktail Garnish Engine (Restrained, Randomized Floating System)
-  // ==========================================================================
-  function initGarnishBackground() {
-    if (!DOM.garnishStage) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-
-    DOM.garnishStage.insertAdjacentHTML('beforebegin', SVG_GRAD_DEF);
-
-    const isMobile = window.innerWidth < 560;
-    const maxActive = isMobile ? 8 : 14;
-    let currentCount = 0;
-
-    function spawnGarnish() {
-      if (currentCount >= maxActive) return;
-
-      const el = document.createElement('div');
-      const typeIdx = Math.floor(Math.random() * GARNISH_SVGS.length);
-      const depthVal = Math.random();
-      const depthClass = depthVal < 0.4 ? 'depth-distant' : depthVal < 0.8 ? 'depth-middle' : 'depth-near';
-
-      el.className = `garnish-item ${depthClass}`;
-      el.innerHTML = GARNISH_SVGS[typeIdx];
-
-      const startX = Math.random() * 92 + 4; // 4vw to 96vw
-      const baseScale = depthVal < 0.4 ? 0.65 : depthVal < 0.8 ? 0.95 : 1.25;
-      const sizePx = 46 * baseScale;
-      el.style.width = `${sizePx}px`;
-      el.style.height = `${sizePx}px`;
-      el.style.left = `${startX}vw`;
-
-      // Movement configuration
-      const duration = (depthVal < 0.4 ? 32 : depthVal < 0.8 ? 24 : 18) + Math.random() * 8;
-      const driftX = (Math.random() - 0.5) * (depthVal < 0.4 ? 40 : 80);
-      const startRot = Math.random() * 360;
-      const endRot = startRot + (Math.random() - 0.5) * 180;
-
-      DOM.garnishStage.appendChild(el);
-      currentCount++;
-
-      const keyframes = [
-        {
-          transform: `translate3d(0, 0, 0) rotate(${startRot}deg) scale(${baseScale})`,
-          opacity: 0
-        },
-        {
-          opacity: el.classList.contains('depth-near') ? 0.42 : el.classList.contains('depth-middle') ? 0.28 : 0.16,
-          offset: 0.15
-        },
-        {
-          opacity: el.classList.contains('depth-near') ? 0.42 : el.classList.contains('depth-middle') ? 0.28 : 0.16,
-          offset: 0.85
-        },
-        {
-          transform: `translate3d(${driftX}px, calc(-100vh - 120px), 0) rotate(${endRot}deg) scale(${baseScale * 1.05})`,
-          opacity: 0
-        }
-      ];
-
-      const anim = el.animate(keyframes, {
-        duration: duration * 1000,
-        easing: 'linear'
-      });
-
-      anim.onfinish = () => {
-        el.remove();
-        currentCount--;
-      };
-    }
-
-    // Initial stagger spawn
-    for (let i = 0; i < maxActive; i++) {
-      setTimeout(() => spawnGarnish(), i * 1400);
-    }
-    // Continuous random interval spawning
-    setInterval(() => {
-      spawnGarnish();
-    }, 2800);
-  }
-
-  // --- Defensive Storage ---
+  // --- Safe Local Storage ---
   function loadStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -323,29 +109,44 @@
         if (parsed.history && typeof parsed.history === 'object') {
           STATE.userData.history = parsed.history;
         }
+        if (parsed.settings && typeof parsed.settings === 'object') {
+          if (typeof parsed.settings.bgAnimation === 'boolean') {
+            STATE.settings.bgAnimation = parsed.settings.bgAnimation;
+          }
+        }
       }
-    } catch (_) {
-      STATE.userData = {
-        stats: { played: 0, solved: 0, streak: 0, bestStreak: 0 },
-        history: {}
-      };
-    }
+    } catch (_) {}
   }
 
   function saveStorage() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE.userData));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        stats: STATE.userData.stats,
+        history: STATE.userData.history,
+        settings: STATE.settings
+      }));
     } catch (_) {}
   }
 
-  // --- Date Utility ---
-  function getLondonISODate() {
+  // --- Authoritative Internet-Derived Time Strategy ---
+  async function resolveAuthoritativeDate() {
+    try {
+      const headRes = await fetch(window.location.href, { method: 'HEAD', cache: 'no-store' });
+      const dateHeader = headRes.headers.get('date');
+      const now = dateHeader ? new Date(dateHeader) : new Date();
+      return formatLondonISODate(now);
+    } catch (_) {
+      return formatLondonISODate(new Date());
+    }
+  }
+
+  function formatLondonISODate(d) {
     return new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/London',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
-    }).format(new Date());
+    }).format(d);
   }
 
   function formatDisplayDate(isoStr) {
@@ -362,6 +163,89 @@
     } catch (_) {
       return isoStr;
     }
+  }
+
+  // --- Toast Feedback ---
+  let toastTimer = null;
+  function showToast(msg) {
+    DOM.appToast.textContent = msg;
+    DOM.appToast.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      DOM.appToast.classList.remove('visible');
+    }, 2400);
+  }
+
+  // --- Cocktail Lounge Garnish Flight System ---
+  const GARNISH_SVGS = [
+    // 1. Orange Twist
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19c-3-3-2-8 1-11s8-5 11-2-2 9-5 12c-4 4-10 4-7-1"/></svg>`,
+    // 2. Lemon Twist
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 16c-4-2-4-8 0-10s8-3 10 1-2 7-6 9-8 3-4 0"/></svg>`,
+    // 3. Lime Wheel
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5-4.5M12 12l-7.5-4.5M12 12v9M12 12l7.5 4.5M12 12l-7.5 4.5"/></svg>`,
+    // 4. Grapefruit Wheel
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l8.5-5M12 12L3.5 7M12 12v10M12 12l8.5 5M12 12l-8.5 5M12 12l-5-8.5M12 12l5-8.5"/></svg>`,
+    // 5. Blood Orange
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" stroke-dasharray="2 2"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/></svg>`,
+    // 6. Dehydrated Citrus
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4.9 0-9-4-9-9 0-5 3.9-9 8.8-9 5.2 0 9.2 4.2 9.2 9.3 0 4.8-4 8.7-9 8.7z" stroke-dasharray="4 2"/><path d="M12 12l5-6M12 12l-6-5M12 12l-6 6M12 12l5 6M12 12v6"/></svg>`,
+    // 7. Cocktail Cherry
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="16" r="4"/><path d="M10 12c0-5 3-9 8-9"/></svg>`,
+    // 8. Double Cherry
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="4"/><circle cx="17" cy="15" r="4"/><path d="M7 13c0-6 3-10 8-10s7 4 7 8"/></svg>`,
+    // 9. Mint Sprig
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10c-3-2-6 1-4 4 1 2 4 2 4-4zM12 10c3-2 6 1 4 4-1 2-4 2-4-4zM12 14c-4-1-6 3-3 5 2 2 4 0 3-5zM12 14c4-1 6 3 3 5-2 2-4 0-3-5zM12 6c-2-3-4-1-2 2 1 1 2 1 2-2zM12 6c2-3 4-1 2 2-1 1-2 1-2-2z"/></svg>`,
+    // 10. Rosemary Sprig
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C10 14 14 8 12 2M12 8c-2-2-4 0-2 2M12 12c-2-1-3 1-2 2M13 6c2-1 3 1 2 2M12 16c-3-1-4 1-2 3M12 10c2-1 4 1 3 2M12 14c2-1 4 1 3 2M12 4c-2 0-3 1-2 2"/></svg>`,
+    // 11. Green Olive
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="6" ry="8" transform="rotate(45 12 12)"/><path d="M16 8c-1-1-3 0-3 1s1 2 2 1 2-1 1-2z"/></svg>`,
+    // 12. Cucumber Ribbon
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4c4-2 8 2 8 6s-4 8-8 10M18 4c-4-2-8 2-8 6s4 8 8 10"/></svg>`
+  ];
+
+  function initAtmosphere() {
+    DOM.iconAtmosphere.innerHTML = '';
+    const depths = ['depth-bg', 'depth-mid', 'depth-fore'];
+    const count = 8; // Maintain 6-9 visible garnishes
+
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      const depth = depths[i % depths.length];
+      el.className = `floating-garnish ${depth}`;
+      el.innerHTML = GARNISH_SVGS[i % GARNISH_SVGS.length];
+
+      const leftPos = Math.round((i / count) * 94 + (Math.random() * 3));
+      // Slower, calmer animations (25s - 45s)
+      const duration = depth === 'depth-bg' ? 38 + Math.random() * 12 :
+                       depth === 'depth-mid' ? 30 + Math.random() * 10 :
+                       24 + Math.random() * 8;
+      
+      const delay = -(Math.random() * duration).toFixed(1);
+      const drift = (Math.random() * 40 - 20).toFixed(0);
+      
+      // Calm rotation
+      const rotStart = (Math.random() * 90 - 45).toFixed(0);
+      const rotEnd = (parseInt(rotStart) + (Math.random() * 60 - 30)).toFixed(0);
+
+      el.style.left = `${leftPos}%`;
+      el.style.animationDuration = `${duration}s`;
+      el.style.animationDelay = `${delay}s`;
+      el.style.setProperty('--drift-x', `${drift}px`);
+      el.style.setProperty('--rot-start', `${rotStart}deg`);
+      el.style.setProperty('--rot-end', `${rotEnd}deg`);
+
+      DOM.iconAtmosphere.appendChild(el);
+    }
+
+    applyAnimationSetting();
+  }
+
+  function applyAnimationSetting() {
+    const isMotionDisabled = !STATE.settings.bgAnimation;
+    document.body.classList.toggle('motion-disabled', isMotionDisabled);
+    DOM.btnToggleAnimation.setAttribute('aria-checked', STATE.settings.bgAnimation ? 'true' : 'false');
+    DOM.lblAnimationState.textContent = STATE.settings.bgAnimation ? 'On' : 'Off';
   }
 
   // --- Deterministic RNG ---
@@ -488,52 +372,41 @@
   function renderMenu() {
     const puzzle = STATE.todayPuzzle;
     if (!puzzle) return;
-
-    DOM.menuDate.textContent = formatDisplayDate(puzzle.date);
-    DOM.dailyPuzzleTheme.textContent = puzzle.title || 'Daily Reserve';
-
-    ['mini', 'midi', 'main'].forEach(tier => {
-      const isSolved = !!STATE.userData.history[`${puzzle.date}_${tier}`];
-      const el = DOM[`status${tier.charAt(0).toUpperCase() + tier.slice(1)}`];
-      if (el) {
-        el.textContent = isSolved ? 'Solved' : 'Unsolved';
-        el.classList.toggle('solved', isSolved);
-      }
-    });
+    DOM.lblPlayAction.textContent = 'Play';
+    DOM.lblPlayTheme.textContent = puzzle.title || 'Daily Blend';
   }
 
   function renderVault() {
     DOM.vaultList.innerHTML = '';
-    const today = getLondonISODate();
+    const today = STATE.serverDate;
     const past = STATE.puzzles.filter(p => p.date < today);
 
     if (!past.length) {
-      DOM.vaultList.innerHTML = '<p class="text-center subtitle" style="padding: 28px;">No previous vintages archived in the vault yet.</p>';
+      DOM.vaultList.innerHTML = '<p class="text-center dialog-subtitle" style="padding: 24px;">No past ledgers available yet.</p>';
       return;
     }
 
     past.forEach(p => {
       const item = document.createElement('div');
-      item.className = 'vault-item';
+      item.className = 'vault-card';
       item.setAttribute('role', 'listitem');
       item.setAttribute('tabindex', '0');
 
       const isDone = tier => !!STATE.userData.history[`${p.date}_${tier}`];
 
       item.innerHTML = `
-        <div class="vault-meta">
-          <strong>${p.title}</strong>
-          <div class="subtitle">${formatDisplayDate(p.date)}</div>
+        <div>
+          <div class="vault-title">${p.title}</div>
+          <div class="vault-date">${formatDisplayDate(p.date)}</div>
         </div>
         <div class="vault-badges">
-          <span class="badge ${isDone('mini') ? 'done' : ''}">Mini</span>
-          <span class="badge ${isDone('midi') ? 'done' : ''}">Midi</span>
-          <span class="badge ${isDone('main') ? 'done' : ''}">Main</span>
+          <span class="vault-badge ${isDone('mini') ? 'solved' : ''}">Mini</span>
+          <span class="vault-badge ${isDone('midi') ? 'solved' : ''}">Midi</span>
+          <span class="vault-badge ${isDone('main') ? 'solved' : ''}">Main</span>
         </div>
       `;
 
       const launch = () => {
-        AUDIO.tap();
         STATE.activePuzzle = p;
         startTier('mini');
       };
@@ -550,12 +423,28 @@
     });
   }
 
-  // --- Gameplay Setup ---
+  // --- How To Play Panel (Single-Axis Right -> Left) ---
+  function openRulesPanel() {
+    DOM.panelHowToPlay.classList.remove('hidden');
+    void DOM.panelHowToPlay.offsetWidth;
+    DOM.panelHowToPlay.classList.add('open');
+  }
+
+  function closeRulesPanel() {
+    DOM.panelHowToPlay.classList.remove('open');
+    setTimeout(() => {
+      if (!DOM.panelHowToPlay.classList.contains('open')) {
+        DOM.panelHowToPlay.classList.add('hidden');
+      }
+    }, 450);
+  }
+
+  // --- Gameplay Setup & Board Flow ---
   function startTier(tier) {
     STATE.activeTier = tier;
     STATE.gridSize = tier === 'mini' ? 8 : tier === 'midi' ? 10 : 12;
 
-    const puzzle = STATE.activePuzzle;
+    const puzzle = STATE.activePuzzle || STATE.todayPuzzle;
     const wordsRaw = puzzle[tier] || '';
     const words = wordsRaw.split(',').map(w => w.trim()).filter(Boolean);
 
@@ -577,7 +466,6 @@
       tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
 
-    // Check completion status
     const key = `${puzzle.date}_${tier}`;
     const past = STATE.userData.history[key];
     STATE.isSolved = !!past;
@@ -637,11 +525,11 @@
       const text = STATE.currentCoords.map(c => STATE.gridData[c.r][c.c]).join('');
       DOM.currentSelection.textContent = text;
     } else {
-      DOM.currentSelection.textContent = STATE.isSolved ? 'Completed' : 'Drag across letters to select';
+      DOM.currentSelection.textContent = STATE.isSolved ? 'Completed!' : 'Select letters';
     }
   }
 
-  // --- Timer ---
+  // --- Timer Operations ---
   function startTimer() {
     clearInterval(STATE.timerInterval);
     STATE.timerInterval = setInterval(() => {
@@ -658,14 +546,13 @@
     DOM.gameTimer.textContent = `${m}:${s}`;
   }
 
-  // --- Selection Geometry ---
+  // --- Selection Geometry & Validation ---
   function getLine(r0, c0, r1, c1) {
     const dr = r1 - r0;
     const dc = c1 - c0;
     const absR = Math.abs(dr);
     const absC = Math.abs(dc);
 
-    // Only allow horizontal, vertical, or 45-degree diagonal
     if (absR !== 0 && absC !== 0 && absR !== absC) return null;
 
     const stepR = dr === 0 ? 0 : dr / absR;
@@ -706,7 +593,6 @@
     );
 
     if (match) {
-      AUDIO.wordFound();
       STATE.foundWords.add(match.word);
       coords.forEach(p => {
         STATE.foundCoords.add(`${p.r},${p.c}`);
@@ -726,7 +612,6 @@
   function onPuzzleComplete() {
     STATE.isSolved = true;
     clearInterval(STATE.timerInterval);
-    AUDIO.victory();
 
     const key = `${STATE.activePuzzle.date}_${STATE.activeTier}`;
     if (!STATE.userData.history[key]) {
@@ -740,51 +625,72 @@
       saveStorage();
     }
 
-    DOM.victoryText.textContent = `Completed in ${DOM.gameTimer.textContent}.`;
+    DOM.victoryText.textContent = `Completed ${STATE.activeTier.toUpperCase()} in ${DOM.gameTimer.textContent}.`;
     DOM.btnVictoryNext.textContent = STATE.activeTier === 'mini' ? 'Play Midi' :
                                     STATE.activeTier === 'midi' ? 'Play Main' : 'Back to Menu';
     DOM.modalVictory.showModal();
   }
 
-  // --- Events Binding ---
+  // --- Sharing Strategy ---
+  async function handleShare() {
+    const shareData = {
+      title: 'Word Search',
+      text: 'Find all hidden words in today\'s Cocktail Lounge Word Search.',
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Link copied to clipboard');
+      } else {
+        showToast('Share: ' + window.location.href);
+      }
+    } catch (_) {
+      showToast('Share: ' + window.location.href);
+    }
+  }
+
+  // --- Event Bindings & Single-Tap Optimization ---
   function bindEvents() {
-    // Audio unlock listener for any initial user gesture
-    window.addEventListener('pointerdown', AUDIO.unlock, { once: true });
-    window.addEventListener('keydown', AUDIO.unlock, { once: true });
+    DOM.linkHome.setAttribute('href', HOME_PORTAL_URL);
 
-    // 1. Daily Puzzle
-    DOM.btnPlayMini.addEventListener('click', () => { AUDIO.tap(); STATE.activePuzzle = STATE.todayPuzzle; startTier('mini'); });
-    DOM.btnPlayMidi.addEventListener('click', () => { AUDIO.tap(); STATE.activePuzzle = STATE.todayPuzzle; startTier('midi'); });
-    DOM.btnPlayMain.addEventListener('click', () => { AUDIO.tap(); STATE.activePuzzle = STATE.todayPuzzle; startTier('main'); });
-
-    // 2. Vault
-    DOM.btnOpenVault.addEventListener('click', () => { AUDIO.tap(); showView('vault'); });
-    DOM.btnVaultBack.addEventListener('click', () => { AUDIO.tap(); showView('menu'); });
-
-    // 3. Home
-    DOM.linkHome.setAttribute('href', HOME_URL);
-    DOM.linkHome.addEventListener('click', () => AUDIO.tap());
-
-    // Gameplay navigation (Game -> Back -> Game Menu)
-    DOM.btnGameBack.addEventListener('click', () => {
-      AUDIO.tap();
-      clearInterval(STATE.timerInterval);
-      showView('menu');
+    DOM.btnPlayGame.addEventListener('click', () => {
+      STATE.activePuzzle = STATE.todayPuzzle;
+      startTier('mini');
     });
 
-    // In-game Tier Switches
-    DOM.tierTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        AUDIO.tap();
-        const tier = tab.dataset.tier;
-        if (tier !== STATE.activeTier) startTier(tier);
-      });
+    DOM.btnOpenVault.addEventListener('click', () => showView('vault'));
+    DOM.btnVaultBack.addEventListener('click', () => showView('menu'));
+
+    DOM.btnOpenSettings.addEventListener('click', () => {
+      DOM.modalSettings.showModal();
     });
 
-    // Modals
-    DOM.btnOpenRules.addEventListener('click', () => { AUDIO.tap(); DOM.modalRules.showModal(); });
+    DOM.btnToggleAnimation.addEventListener('click', () => {
+      STATE.settings.bgAnimation = !STATE.settings.bgAnimation;
+      saveStorage();
+      applyAnimationSetting();
+    });
+
+    DOM.btnOpenRules.addEventListener('click', openRulesPanel);
+    DOM.btnCloseRules.addEventListener('click', closeRulesPanel);
+    DOM.btnAcknowledgeRules.addEventListener('click', closeRulesPanel);
+
+    DOM.panelHowToPlay.addEventListener('click', e => {
+      if (e.target === DOM.panelHowToPlay) closeRulesPanel();
+    });
+
     DOM.btnOpenStats.addEventListener('click', () => {
-      AUDIO.tap();
       DOM.statPlayed.textContent = STATE.userData.stats.played;
       DOM.statSolved.textContent = STATE.userData.stats.solved;
       DOM.statStreak.textContent = STATE.userData.stats.streak;
@@ -792,28 +698,47 @@
       DOM.modalStats.showModal();
     });
 
+    DOM.btnShareGame.addEventListener('click', handleShare);
+
+    DOM.btnUtilityPlus.addEventListener('click', () => {
+      if (FUTURE_EXT_URL && FUTURE_EXT_URL !== '#') {
+        window.open(FUTURE_EXT_URL, '_blank', 'noopener,noreferrer');
+      } else {
+        showToast('Features forthcoming.');
+      }
+    });
+
+    DOM.btnGameBack.addEventListener('click', () => {
+      clearInterval(STATE.timerInterval);
+      showView('menu');
+    });
+
+    DOM.tierTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tier = tab.dataset.tier;
+        if (tier !== STATE.activeTier) startTier(tier);
+      });
+    });
+
     document.querySelectorAll('[data-close]').forEach(btn => {
       btn.addEventListener('click', () => {
-        AUDIO.tap();
         const modal = document.getElementById(btn.dataset.close);
         if (modal) modal.close();
       });
     });
 
     DOM.btnVictoryNext.addEventListener('click', () => {
-      AUDIO.tap();
       DOM.modalVictory.close();
       if (STATE.activeTier === 'mini') startTier('midi');
       else if (STATE.activeTier === 'midi') startTier('main');
       else showView('menu');
     });
 
-    // Board Pointer Interactions
+    // Pointer event interaction without delay or double-tap requirement
     DOM.grid.addEventListener('pointerdown', e => {
       if (STATE.isSolved) return;
       const cell = getCellFromPoint(e.clientX, e.clientY);
       if (!cell) return;
-      AUDIO.cellTick();
       STATE.isSelecting = true;
       STATE.startCell = cell;
       STATE.currentCoords = [cell];
@@ -827,16 +752,13 @@
       if (!cell) return;
       const line = getLine(STATE.startCell.r, STATE.startCell.c, cell.r, cell.c);
       if (line) {
-        if (line.length !== STATE.currentCoords.length) {
-          AUDIO.cellTick();
-        }
         STATE.currentCoords = line;
         applyHighlight(line);
         updateStatus();
       }
     });
 
-    const endSelection = () => {
+    const finalizeSelection = () => {
       if (!STATE.isSelecting) return;
       STATE.isSelecting = false;
       applyHighlight(null);
@@ -848,34 +770,33 @@
       updateStatus();
     };
 
-    window.addEventListener('pointerup', endSelection);
-    window.addEventListener('pointercancel', endSelection);
-    DOM.btnRetry.addEventListener('click', () => {
-      AUDIO.tap();
-      init();
-    });
+    window.addEventListener('pointerup', finalizeSelection);
+    window.addEventListener('pointercancel', finalizeSelection);
+
+    DOM.btnRetry.addEventListener('click', initApp);
   }
 
-  // --- Initialization ---
-  async function init() {
+  // --- Application Bootstrap ---
+  async function initApp() {
     loadStorage();
-    initGarnishBackground();
+    initAtmosphere();
+
     try {
+      STATE.serverDate = await resolveAuthoritativeDate();
       const res = await fetch(CSV_FILE, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Puzzle CSV not found');
+      if (!res.ok) throw new Error('Unable to fetch puzzle ledgers');
       const text = await res.text();
       const rows = parseCSV(text);
 
-      if (!rows.length) throw new Error('No puzzles found in data file');
+      if (!rows.length) throw new Error('Puzzle dataset is empty');
 
-      // Sort newest to oldest
       STATE.puzzles = rows.sort((a, b) => b.date.localeCompare(a.date));
-      const today = getLondonISODate();
 
-      // Today's puzzle or fallback to most recent
-      STATE.todayPuzzle = STATE.puzzles.find(p => p.date === today) ||
-                          STATE.puzzles.find(p => p.date <= today) ||
+      STATE.todayPuzzle = STATE.puzzles.find(p => p.date === STATE.serverDate) ||
+                          STATE.puzzles.find(p => p.date <= STATE.serverDate) ||
                           STATE.puzzles[0];
+
+      STATE.activePuzzle = STATE.todayPuzzle;
 
       bindEvents();
       showView('menu');
@@ -888,5 +809,5 @@
     }
   }
 
-  init();
+  initApp();
 })();
